@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DenounceBeasts.API.Models
+namespace DenounceBeasts.API.Models.Dtos
 {
-    public class Municipality
+    public class MunicipalityDto
     {
         
         public int Id { get; set; }
@@ -13,6 +13,5 @@ namespace DenounceBeasts.API.Models
         public string PostalCode { get; set; }
         public bool IsActive { get; set; }
 
-        public List<Sector> Sectors { get; set; }
     }
 }

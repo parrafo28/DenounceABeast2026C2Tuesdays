@@ -1,4 +1,4 @@
-﻿using DenounceBeasts.API.Models; 
+﻿using DenounceBeasts.API.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -61,7 +61,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         }
 
         [HttpPost] // POST: api/municipalities
-        public ActionResult<Municipality> Create(Municipality municipality)
+        public ActionResult<int> Create(Municipality municipality)
         {
             // Validación manual adicional: nombre no vacío (alternativa a [Required]).
             if (string.IsNullOrWhiteSpace(municipality.Name))
@@ -78,11 +78,12 @@ namespace DenunciaUnaBestia.Api.Controllers
 
             _municipalities.Add(municipality);
             // Devolver respuesta 201 Created con el recurso creado
-            return CreatedAtAction(
-                nameof(GetById),              // Nombre de la acción para generar el link de detalle
-                new { id = municipality.Id }, // Valores de ruta (el id del nuevo recurso)
-                municipality                  // El objeto creado (en el cuerpo de la respuesta)
-            );
+            ////return CreatedAtAction(
+            ////    nameof(GetById),              // Nombre de la acción para generar el link de detalle
+            ////    new { id = municipality.Id }, // Valores de ruta (el id del nuevo recurso)
+            ////    municipality                  // El objeto creado (en el cuerpo de la respuesta)
+            
+            return Ok(new { Id = municipality.Id }); // Alternativa: solo devolver el id del nuevo recurso.
         }
 
         [HttpPut("{id}")] // PUT: api/municipalities/5

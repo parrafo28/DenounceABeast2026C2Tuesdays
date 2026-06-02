@@ -1,4 +1,4 @@
-﻿namespace DenounceBeasts.API.Models
+﻿namespace DenounceBeasts.API.Models.Entities
 {
     public class Sector
     {

@@ -1,4 +1,5 @@
-﻿using DenounceBeasts.API.Models;
+﻿using DenounceBeasts.API.Models.Dtos;
+using DenounceBeasts.API.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -16,28 +17,43 @@ namespace DenunciaUnaBestia.Api.Controllers
         };
 
         [HttpGet] // GET: api/sectors
-        public ActionResult<IEnumerable<Sector>> GetAll()
+        public ActionResult<IEnumerable<SectorDto>> GetAll()
         {
-            return Ok(_sectors);
+            var response = _sectors.Select(s => new SectorDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                MunicipalityId = s.MunicipalityId,
+                IsActive = s.IsActive
+            }).ToList();
+
+            return Ok(response);
         }
 
         [HttpGet("{id}")] // GET: api/sectors/5
-        public ActionResult<Sector> GetById(int id)
+        public ActionResult<SectorDto> GetById(int id)
         {
             var sector = _sectors.FirstOrDefault(s => s.Id == id);
             if (sector == null)
                 return NotFound();
-            return Ok(sector);
+            var response = new SectorDto
+            {
+                Id = sector.Id,
+                Name = sector.Name,
+                MunicipalityId = sector.MunicipalityId,
+                IsActive = sector.IsActive
+            };
+            return Ok(response);
         }
 
         [HttpPost] // POST: api/sectors
-        public ActionResult<Sector> Create(Sector sector)
+        public ActionResult<int> Create(CreateSectorDto request)
         {
-            if (string.IsNullOrWhiteSpace(sector.Name))
+            if (string.IsNullOrWhiteSpace(request.Name))
             {
                 return BadRequest("Name of sector is required.");
             }
-            if (sector.MunicipalityId <= 0)
+            if (request.MunicipalityId <= 0)
             {
                 return BadRequest("MunicipalityId must be provided and positive.");
             }
@@ -45,29 +61,39 @@ namespace DenunciaUnaBestia.Api.Controllers
             //  pero omitiremos esa comprobación en esta versión inicial.)
 
             int newId = _sectors.Any() ? _sectors.Max(s => s.Id) + 1 : 1;
+          
+            var sector = new Sector
+            {
+                Name = request.Name,
+                MunicipalityId = request.MunicipalityId
+            };
+
+
             sector.Id = newId;
             sector.IsActive = true; // siempre creamos como activo
             _sectors.Add(sector);
-            return CreatedAtAction(nameof(GetById), new { id = sector.Id }, sector);
+            return Ok(new { Id = sector.Id });
+           // return CreatedAtAction(nameof(GetById), new { id = sector.Id }, sector);
         }
 
         [HttpPut("{id}")] // PUT: api/sectors/5
-        public IActionResult Update(int id, Sector sector)
+        public IActionResult Update(int id, UpdateSectorDto request)
         {
             var existing = _sectors.FirstOrDefault(s => s.Id == id);
             if (existing == null)
                 return NotFound();
             // Actualizar campos (excepto Id)
-            existing.Name = sector.Name;
-            existing.MunicipalityId = sector.MunicipalityId;
-            existing.IsActive = sector.IsActive;
+            existing.Name = request.Name;
+            existing.MunicipalityId = request.MunicipalityId;
+            existing.IsActive = request.IsActive;
             return NoContent();
         }
 
-        [HttpDelete("{id}")] // DELETE: api/sectors/5
-        public IActionResult Delete(int id)
+        //[HttpDelete("{id}")] // DELETE: api/sectors/5
+        [HttpDelete] // DELETE: api/sectors/5
+        public IActionResult Delete(DeleteSectorDto request)
         {
-            var existing = _sectors.FirstOrDefault(s => s.Id == id);
+            var existing = _sectors.FirstOrDefault(s => s.Id == request.Id);
             if (existing == null)
                 return NotFound();
             _sectors.Remove(existing);
