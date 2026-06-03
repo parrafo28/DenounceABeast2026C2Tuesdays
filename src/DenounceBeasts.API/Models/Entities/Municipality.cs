@@ -13,6 +13,6 @@ namespace DenounceBeasts.API.Models.Entities
         public string PostalCode { get; set; }
         public bool IsActive { get; set; }
 
-       // public List<Sector> Sectors { get; set; }
+        public List<Sector> Sectors { get; set; }
     }
 }
