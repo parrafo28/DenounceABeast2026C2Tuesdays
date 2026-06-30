@@ -9,7 +9,11 @@ namespace DenounceBeasts.API.Data
         { 
         }
 
-        public DbSet<Sector> Sectors { get; set; }
+        public DbSet<ComplaintType> ComplaintTypes { get; set; }
+
         public DbSet<Municipality> Municipalities { get; set; }
+
+        public DbSet<Sector> Sectors { get; set; }
+        public DbSet<Status> Status { get; set; }
     }
 }

@@ -6,7 +6,8 @@
         public string Name { get; set; } = string.Empty;
         public int MunicipalityId { get; set; }
         public Municipality Municipality { get; set; }
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; } = true; 
+        //public int RandomNumber { get; set; }
     }
 
 }

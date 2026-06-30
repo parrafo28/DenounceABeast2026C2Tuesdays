@@ -1,6 +1,9 @@
-﻿using DenounceBeasts.API.Data;
+﻿using AutoMapper;
+using DenounceBeasts.API.Controllers;
+using DenounceBeasts.API.Data;
 using DenounceBeasts.API.Models.Dtos;
 using DenounceBeasts.API.Models.Entities;
+using DenounceBeasts.API.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +11,15 @@ namespace DenunciaUnaBestia.Api.Controllers
 {
     [ApiController]
     [Route("api/sectors")]
-    public class SectorsController : ControllerBase
+    public class SectorsController : BaseController
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public SectorsController(ApplicationDbContext dbContext)
+        public SectorsController(ApplicationDbContext dbContext, IMapper mapper) : base(dbContext)
         {
             _context = dbContext;
+            _mapper = mapper;
         }
 
         //private static readonly List<Sector> _sectors = new List<Sector>
@@ -25,27 +30,34 @@ namespace DenunciaUnaBestia.Api.Controllers
         //};
 
         [HttpGet] // GET: api/sectors
-        public ActionResult<IEnumerable<SectorDto>> GetAll()
+        //public ActionResult<IEnumerable<SectorDto>> GetAll()
+        //public IEnumerable<SectorDto> GetAll()
+        public ApiResponse<IEnumerable<SectorDto>> GetAll()
         {
             var sectors = _context.Sectors.ToList();
-            var response = sectors.Select(s => new SectorDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                MunicipalityId = s.MunicipalityId,
-                IsActive = s.IsActive
-            }).ToList();
+            //var response = sectors.Select(s => new SectorDto
+            //{
+            //    Id = s.Id,
+            //    Name = s.Name,
+            //    MunicipalityId = s.MunicipalityId,
+            //    IsActive = s.IsActive,
+            //    RandomNumber = s.RandomNumber
+            //}).ToList();
+            var response = _mapper.Map<List<SectorDto>>(sectors);
 
-            return Ok(response);
+            return ApiResponse<IEnumerable<SectorDto>>.SuccessResponse(response);
+            //return response;
+            //return Ok(response);
         }
         [HttpGet] // GET: api/sectors
         [Route("with-municipality")] // GET: api/sectors/active
-        public ActionResult<IEnumerable<SectorDto>> GetAllWithMunicipality()
+        //public ActionResult<ApiResponse<IEnumerable<SectorDto>>> GetAllWithMunicipality()
+        public ApiResponse<IEnumerable<SectorDto>> GetAllWithMunicipality()
         {
             //var sectors = _context.Sectors.ToList();
             var sectors = _context.Sectors.Include(p => p.Municipality).ToList();
 
-           // var responseList = new List<SectorDto>();
+            // var responseList = new List<SectorDto>();
 
             //foreach (var sector in sectors)
             //{
@@ -74,42 +86,53 @@ namespace DenunciaUnaBestia.Api.Controllers
 
             //    responseList.Add(sectorDto);
             //}
-             
-            var response = sectors.Select(s => new SectorDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                MunicipalityId = s.MunicipalityId,
-                IsActive = s.IsActive,
-                //MunicipalityName = _context.Municipalities
-                //    .Where(m => m.Id == s.MunicipalityId)
-                //    .Select(m => m.Name)
-                //    .FirstOrDefault() ?? "Unknown"
-                MunicipalityName = s.Municipality != null ? s.Municipality.Name : "Unknown"
-            }).ToList();
 
-            return Ok(response);
+            //var response = sectors.Select(s => new SectorDto
+            //{
+            //    Id = s.Id,
+            //    Name = s.Name,
+            //    MunicipalityId = s.MunicipalityId,
+            //    IsActive = s.IsActive,
+            //    RandomNumber = s.RandomNumber,
+            //    //MunicipalityName = _context.Municipalities
+            //    //    .Where(m => m.Id == s.MunicipalityId)
+            //    //    .Select(m => m.Name)
+            //    //    .FirstOrDefault() ?? "Unknown"
+            //    MunicipalityName = s.Municipality != null ? s.Municipality.Name : "Unknown"
+            //}).ToList();
+
+            var response = _mapper.Map<List<SectorDto>>(sectors);
+            //return Ok(response);
+            return ApiResponse<IEnumerable<SectorDto>>.SuccessResponse(response);
         }
 
         [HttpGet("{id}")] // GET: api/sectors/5
-        public ActionResult<SectorDto> GetById(int id)
+        //public ActionResult<ApiResponse< SectorDto> > GetById(int id)
+        public ApiResponse<SectorDto> GetById(int id)
         {
             var sector = _context.Sectors
                 .FirstOrDefault(s => s.Id == id);
             if (sector == null)
-                return NotFound();
-            var response = new SectorDto
             {
-                Id = sector.Id,
-                Name = sector.Name,
-                MunicipalityId = sector.MunicipalityId,
-                IsActive = sector.IsActive
-            };
-            return Ok(response);
+                return ApiResponse<SectorDto>.ErrorResponse("Sector not found", 404);
+                //return NotFound();
+            }
+            //var response = new SectorDto
+            //{
+            //    Id = sector.Id,
+            //    Name = sector.Name,
+            //    MunicipalityId = sector.MunicipalityId,
+            //    IsActive = sector.IsActive                ,
+            //    RandomNumber = sector.RandomNumber,
+            //};
+            var response = _mapper.Map<SectorDto>(sector);
+            //return Ok(response);
+            //return Ok(new { bbb= "bbbdbd" });
+            return ApiResponse<SectorDto>.SuccessResponse(response);
         }
 
         [HttpPost] // POST: api/sectors
-        public ActionResult<int> Create(CreateSectorDto request)
+        public ActionResult<ApiResponse<int>> Create(CreateSectorDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
@@ -123,18 +146,21 @@ namespace DenunciaUnaBestia.Api.Controllers
             //  pero omitiremos esa comprobación en esta versión inicial.)
 
 
-            var sector = new Sector
-            {
-                Name = request.Name,
-                MunicipalityId = request.MunicipalityId
-            };
+            //var sector = new Sector
+            //{
+            //    Name = request.Name,
+            //    MunicipalityId = request.MunicipalityId
+            //};
 
+            var sector = _mapper.Map<Sector>(request);
             sector.IsActive = true; // siempre creamos como activo
             _context.Sectors.Add(sector);
             _context.SaveChanges(); // Esto asignará un Id al sector
 
-            return Ok(new { Id = sector.Id });
+            //return Ok(new { Id = sector.Id });
+
             // return CreatedAtAction(nameof(GetById), new { id = sector.Id }, sector);
+            return ApiResponse<int>.SuccessResponse(sector.Id, 201);
         }
 
         [HttpPut("{id}")] // PUT: api/sectors/5
@@ -148,6 +174,7 @@ namespace DenunciaUnaBestia.Api.Controllers
             existing.Name = request.Name;
             existing.MunicipalityId = request.MunicipalityId;
             existing.IsActive = request.IsActive;
+
 
             _context.Sectors.Update(existing);
             _context.SaveChanges();

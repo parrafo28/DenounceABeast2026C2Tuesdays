@@ -7,5 +7,6 @@
         public int MunicipalityId { get; set; }
         public string MunicipalityName { get; set; }
         public bool IsActive { get; set; } = true;
+        public int RandomNumber { get; set; }
     } 
 }
