@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using DenounceBeasts.API.Controllers;
-using DenounceBeasts.API.Data;
-using DenounceBeasts.API.Models.Dtos;
-using DenounceBeasts.API.Models.Entities;
-using DenounceBeasts.API.Models.Responses;
+using DenounceBeasts.Application.Models.Dtos;
+using DenounceBeasts.Application.Models.Responses;
+using DenounceBeasts.Domain.Entities;
+using DenounceBeasts.Infraestructure;
+using DenounceBeasts.Infraestructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,11 +16,15 @@ namespace DenunciaUnaBestia.Api.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly SectorRepository _sectorRepo;
+        private readonly UnitOfWork unitOfWork;
 
-        public SectorsController(ApplicationDbContext dbContext, IMapper mapper) : base(dbContext)
+        public SectorsController(ApplicationDbContext dbContext, IMapper mapper, SectorRepository sectorRepo, UnitOfWork unitOfWork) : base(dbContext)
         {
             _context = dbContext;
             _mapper = mapper;
+            this._sectorRepo = sectorRepo;
+            this.unitOfWork = unitOfWork;
         }
 
         //private static readonly List<Sector> _sectors = new List<Sector>
@@ -34,7 +39,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         //public IEnumerable<SectorDto> GetAll()
         public ApiResponse<IEnumerable<SectorDto>> GetAll()
         {
-            var sectors = _context.Sectors.ToList();
+            var sectors = _sectorRepo.GetAll();
             //var response = sectors.Select(s => new SectorDto
             //{
             //    Id = s.Id,
@@ -55,7 +60,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         public ApiResponse<IEnumerable<SectorDto>> GetAllWithMunicipality()
         {
             //var sectors = _context.Sectors.ToList();
-            var sectors = _context.Sectors.Include(p => p.Municipality).ToList();
+            var sectors = _sectorRepo.GetAllWithMunicipality();
 
             // var responseList = new List<SectorDto>();
 
@@ -110,8 +115,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         //public ActionResult<ApiResponse< SectorDto> > GetById(int id)
         public ApiResponse<SectorDto> GetById(int id)
         {
-            var sector = _context.Sectors
-                .FirstOrDefault(s => s.Id == id);
+            var sector = _sectorRepo.GetById(id);
             if (sector == null)
             {
                 return ApiResponse<SectorDto>.ErrorResponse("Sector not found", 404);
@@ -154,9 +158,10 @@ namespace DenunciaUnaBestia.Api.Controllers
 
             var sector = _mapper.Map<Sector>(request);
             sector.IsActive = true; // siempre creamos como activo
-            _context.Sectors.Add(sector);
-            _context.SaveChanges(); // Esto asignará un Id al sector
-
+            //_context.Sectors.Add(sector);
+            //_context.SaveChanges(); // Esto asignará un Id al sector
+            _sectorRepo.Create(sector);
+            unitOfWork.Complete();
             //return Ok(new { Id = sector.Id });
 
             // return CreatedAtAction(nameof(GetById), new { id = sector.Id }, sector);
@@ -166,8 +171,9 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpPut("{id}")] // PUT: api/sectors/5
         public IActionResult Update(int id, UpdateSectorDto request)
         {
-            var existing = _context.Sectors
-                .FirstOrDefault(s => s.Id == id);
+            //var existing = _context.Sectors
+            //    .FirstOrDefault(s => s.Id == id);
+            var existing = _sectorRepo.GetById(id);
             if (existing == null)
                 return NotFound();
             // Actualizar campos (excepto Id)
@@ -175,9 +181,11 @@ namespace DenunciaUnaBestia.Api.Controllers
             existing.MunicipalityId = request.MunicipalityId;
             existing.IsActive = request.IsActive;
 
+            _sectorRepo.Update(id, existing);
+            unitOfWork.Complete();
 
-            _context.Sectors.Update(existing);
-            _context.SaveChanges();
+            //_context.Sectors.Update(existing);
+            //_context.SaveChanges();
 
             return NoContent();
         }
@@ -186,11 +194,15 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpDelete] // DELETE: api/sectors/5
         public IActionResult Delete(DeleteSectorDto request)
         {
-            var existing = _context.Sectors.FirstOrDefault(s => s.Id == request.Id);
+            var existing = _sectorRepo.GetById(request.Id);
             if (existing == null)
                 return NotFound();
-            _context.Sectors.Remove(existing);
-            _context.SaveChanges();
+            //_context.Sectors.Remove(existing);
+            //_context.SaveChanges();
+            _sectorRepo.Delete(request.Id);
+            unitOfWork.Complete();
+
+            //_sectorRepo.Delete(existing);
             return NoContent();
         }
     }

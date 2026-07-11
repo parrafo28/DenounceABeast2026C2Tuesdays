@@ -1,4 +1,4 @@
-﻿namespace DenounceBeasts.API.Models.Dtos
+﻿namespace DenounceBeasts.Application.Models.Dtos
 {
     public class DeleteSectorDto
     {

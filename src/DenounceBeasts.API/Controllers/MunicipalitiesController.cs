@@ -1,6 +1,9 @@
-﻿using DenounceBeasts.API.Models.Entities;
+﻿using AutoMapper;
+using DenounceBeasts.Application.Models.Dtos;
+using DenounceBeasts.Application.Models.Responses;
+using DenounceBeasts.Application.Services;
+using DenounceBeasts.Infraestructure.Repository;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace DenunciaUnaBestia.Api.Controllers
 {
@@ -9,110 +12,59 @@ namespace DenunciaUnaBestia.Api.Controllers
     [Route("api/municipalities")]
     public class MunicipalitiesController : ControllerBase
     {
-        private static readonly List<Municipality> _municipalities = new List<Municipality>
-        {
-            new Municipality { Id = 1, Name = "Santo Domingo", PostalCode = "10101", IsActive = true },
-            new Municipality { Id = 2, Name = "Santiago de los Caballeros", PostalCode = "51000", IsActive = true },
-            new Municipality { Id = 3, Name = "Puerto Plata", PostalCode = "57000", IsActive = true }
-        };
+        private readonly UnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+        private readonly MunicipalityServices _municipalityServices;
 
-        [HttpGet] // GET: api/municipalities
-        public ActionResult<IEnumerable<Municipality>> GetAll()
+        public MunicipalitiesController(UnitOfWork unitOfWork, IMapper mapper,
+            MunicipalityServices municipalityServices)
         {
-            // Retornamos 200 OK con la lista completa.
-            return Ok(_municipalities);
+            this._unitOfWork = unitOfWork;
+            this._mapper = mapper;
+            this._municipalityServices = municipalityServices;
         }
 
 
-        //[HttpGet] // GET: api/municipalities
-        //[Route("all")] // GET: api/municipalities/all
-        //public ActionResult<IEnumerable<Municipality>> GetAllx()
-        //{
-        //    // Retornamos 200 OK con la lista completa.
-        //    return Ok(_municipalities);
-        //}
+        [HttpGet]
+        public ApiResponse<List<MunicipalityDto>> GetAll() =>
+            _municipalityServices.GetAllMunicipalities();
 
-        //[HttpGet] // GET: api/municipalities
-        //[Route("api/all")] // GET: api/municipalities/all
-        //public ActionResult<IEnumerable<Municipality>> GetAllxx()
-        //{
-        //    // Retornamos 200 OK con la lista completa.
-        //    return Ok(_municipalities);
-        //}
 
-        //[HttpGet] // GET: api/municipalities
-        //[Route("/sectors/getall")] // GET: api/municipalities/all
-        //public ActionResult<IEnumerable<Municipality>> GetAllxxx()
-        //{
-        //    // Retornamos 200 OK con la lista completa.
-        //    return Ok(_municipalities);
-        //}
+        [HttpGet("{id}")]
+        public ApiResponse<MunicipalityDto> GetById(int id) =>
+                        _municipalityServices.GetMunicipalityById(id);
 
-        [HttpGet("{id}")] // GET: api/municipalities/5
-        public ActionResult<Municipality> GetById(int id)
+        [HttpPost]
+        public ApiResponse<int> Create(MunicipalityDto request) =>
+            _municipalityServices.CreateMunicipality(request);
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, MunicipalityDto municipality)
         {
-            var municipality = _municipalities.FirstOrDefault(m => m.Id == id);
-            if (municipality == null)
+            var response = _municipalityServices.UpdateMunicipality(id, municipality);
+            if (!response.Success)
             {
-                // Retornar 404 si no se encontró
-                return NotFound();
+                return BadRequest(response.Message);
             }
-            return Ok(municipality);
-        }
-
-        [HttpPost] // POST: api/municipalities
-        public ActionResult<int> Create(Municipality municipality)
-        {
-            // Validación manual adicional: nombre no vacío (alternativa a [Required]).
-            if (string.IsNullOrWhiteSpace(municipality.Name))
-            {
-                return BadRequest("Name of municipality is required.");
-            }
-            int newId = _municipalities.Any() ? _municipalities.Max(m => m.Id) + 1 : 1;
-            municipality.Id = newId;
-            if (municipality.IsActive == false)
-            {
-                // Por lógica de negocio, podríamos decidir que todo nuevo municipio inicia activo.
-                municipality.IsActive = true;
-            }
-
-            _municipalities.Add(municipality);
-            // Devolver respuesta 201 Created con el recurso creado
-            ////return CreatedAtAction(
-            ////    nameof(GetById),              // Nombre de la acción para generar el link de detalle
-            ////    new { id = municipality.Id }, // Valores de ruta (el id del nuevo recurso)
-            ////    municipality                  // El objeto creado (en el cuerpo de la respuesta)
-            
-            return Ok(new { Id = municipality.Id }); // Alternativa: solo devolver el id del nuevo recurso.
-        }
-
-        [HttpPut("{id}")] // PUT: api/municipalities/5
-        public IActionResult Update(int id, Municipality municipality)
-        {
-            var existing = _municipalities.FirstOrDefault(m => m.Id == id);
-            if (existing == null)
-            {
-                return NotFound();
-            }
-            // Opcional: validar que municipality.Id == id si quisiéramos forzar consistencia.
-            // Actualizar propiedades (excepto el Id)
-            existing.Name = municipality.Name;
-            existing.PostalCode = municipality.PostalCode;
-            existing.IsActive = municipality.IsActive;
-            // Retornar 204 NoContent indicando que se realizó la operación sin devolver cuerpo.
+            //return Ok(response);
             return NoContent();
         }
 
-        [HttpDelete("{id}")] // DELETE: api/municipalities/5
+        [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var existing = _municipalities.FirstOrDefault(m => m.Id == id);
-            if (existing == null)
+            //var existing = _unitOfWork.Municipality.GetById(id);
+            //if (existing == null)
+            //{
+            //    return NotFound();
+            //}
+            //_unitOfWork.Municipality.Delete(existing);
+            //_unitOfWork.Complete();
+            var response = _municipalityServices.DeleteMunicipality(id);
+            if (!response.Success)
             {
-                return NotFound();
+                return BadRequest(response.Message);
             }
-            _municipalities.Remove(existing);
-            // Retornamos 204 NoContent para indicar que se eliminó correctamente (sin contenido).
             return NoContent();
         }
     }

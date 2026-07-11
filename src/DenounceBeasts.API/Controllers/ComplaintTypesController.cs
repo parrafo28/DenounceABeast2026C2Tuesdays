@@ -1,7 +1,8 @@
 ﻿using DenounceBeasts.API.Controllers;
-using DenounceBeasts.API.Data;
-using DenounceBeasts.API.Models.Dtos;
-using DenounceBeasts.API.Models.Entities;
+using DenounceBeasts.Application.Models.Dtos;
+using DenounceBeasts.Domain.Entities;
+using DenounceBeasts.Infraestructure;
+using DenounceBeasts.Infraestructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,14 +12,23 @@ namespace DenunciaUnaBestia.Api.Controllers
     [Route("api/complaintTypes")]
     public class ComplaintTypesController : BaseController
     {
-        public ComplaintTypesController(ApplicationDbContext dbContext) : base(dbContext)
+        //private readonly ComplaintTypeRepository _complaintTypeRepository;
+        private readonly UnitOfWork unitOfWork;
+
+        public ComplaintTypesController(ApplicationDbContext dbContext,
+            //ComplaintTypeRepository complaintTypeRepository,
+            //GenericRespository<Status> genericRepository,
+            //SectorRepository sectorRepository,
+            UnitOfWork unitOfWork) : base(dbContext)
         {
+            //this._complaintTypeRepository = complaintTypeRepository;
+            this.unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public ActionResult<IEnumerable<ComplaintTypeDto>> GetAll()
         {
-            var complaintTypes = Context.ComplaintTypes.ToList();
+            var complaintTypes = unitOfWork.ComplaintType.GetAll();
             var response = complaintTypes.Select(s => new ComplaintTypeDto
             {
                 Id = s.Id,
@@ -31,8 +41,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpGet("{id}")]
         public ActionResult<ComplaintTypeDto> GetById(int id)
         {
-            var complaintType = Context.ComplaintTypes
-                .FirstOrDefault(s => s.Id == id);
+            var complaintType = unitOfWork.ComplaintType.GetById(id);
             if (complaintType == null)
             {
                 return NotFound();
@@ -59,8 +68,10 @@ namespace DenunciaUnaBestia.Api.Controllers
                 Name = request.Name
             };
 
-            Context.ComplaintTypes.Add(complaintType);
-            Context.SaveChanges();
+            //Context.ComplaintTypes.Add(complaintType);
+            //Context.SaveChanges();
+            unitOfWork.ComplaintType.Create(complaintType);
+            unitOfWork.Complete();
 
             return Ok(new { Id = complaintType.Id });
         }
@@ -68,14 +79,17 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(int id, ComplaintTypeDto request)
         {
-            var existing = Context.ComplaintTypes
-                .FirstOrDefault(s => s.Id == id);
+            //var existing = Context.ComplaintTypes
+            //    .FirstOrDefault(s => s.Id == id);
+            var existing = unitOfWork.ComplaintType.GetById(id);
             if (existing == null)
                 return NotFound();
             existing.Name = request.Name;
 
-            Context.ComplaintTypes.Update(existing);
-            Context.SaveChanges();
+            unitOfWork.ComplaintType.Update(id, existing);
+            //Context.ComplaintTypes.Update(existing);
+            //Context.SaveChanges();
+            unitOfWork.Complete();
 
             return NoContent();
         }
@@ -83,11 +97,15 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpDelete]
         public IActionResult Delete(ComplaintTypeDto request)
         {
-            var existing = Context.ComplaintTypes.FirstOrDefault(s => s.Id == request.Id);
+            var existing = unitOfWork.ComplaintType.GetById(request.Id);
+
             if (existing == null)
                 return NotFound();
-            Context.ComplaintTypes.Remove(existing);
-            Context.SaveChanges();
+            //Context.ComplaintTypes.Remove(existing);
+            //Context.SaveChanges();
+            unitOfWork.ComplaintType.Delete(existing);
+            unitOfWork.Complete();
+
             return NoContent();
         }
     }

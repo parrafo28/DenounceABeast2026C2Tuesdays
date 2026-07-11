@@ -1,3 +1,10 @@
 <Solution>
+  <Folder Name="/Business/">
+    <Project Path="DenounceBeasts.Application/DenounceBeasts.Application.csproj" Id="4c98ca1f-b08d-4249-9427-315e8997c34f" />
+  </Folder>
+  <Folder Name="/Data/">
+    <Project Path="DenounceBeasts.Domain/DenounceBeasts.Domain.csproj" Id="5513caf8-2ba5-4443-9223-b634c3f2f0e8" />
+    <Project Path="DenounceBeasts.Infraestructure/DenounceBeasts.Infraestructure.csproj" Id="74ae3fcb-19b6-45a7-a75d-f4a9785a3266" />
+  </Folder>
   <Project Path="DenounceBeasts.API/DenounceBeasts.API.csproj" />
 </Solution>

@@ -1,12 +1,12 @@
-﻿using DenounceBeasts.API.Models.Entities;
+﻿using DenounceBeasts.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace DenounceBeasts.API.Data
+namespace DenounceBeasts.Infraestructure
 {
-    public class ApplicationDbContext:DbContext
+    public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions options ): base(options)
-        { 
+        public ApplicationDbContext(DbContextOptions options) : base(options)
+        {
         }
 
         public DbSet<ComplaintType> ComplaintTypes { get; set; }

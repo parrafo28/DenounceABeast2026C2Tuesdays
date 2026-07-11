@@ -1,7 +1,8 @@
 ﻿using DenounceBeasts.API.Controllers;
-using DenounceBeasts.API.Data;
-using DenounceBeasts.API.Models.Dtos;
-using DenounceBeasts.API.Models.Entities;
+using DenounceBeasts.Application.Models.Dtos;
+using DenounceBeasts.Domain.Entities;
+using DenounceBeasts.Infraestructure;
+using DenounceBeasts.Infraestructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,14 +12,19 @@ namespace DenunciaUnaBestia.Api.Controllers
     [Route("api/status")]
     public class StatusController : BaseController
     {
-        public StatusController(ApplicationDbContext dbContext) : base(dbContext)
+        private readonly GenericRespository<Status> _statusRepo;
+        private readonly UnitOfWork unitOfWork;
+
+        public StatusController(ApplicationDbContext dbContext, GenericRespository<Status> statusRepo, UnitOfWork unitOfWork) : base(dbContext)
         {
+            this._statusRepo = statusRepo;
+            this.unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public ActionResult<IEnumerable<StatusDto>> GetAll()
         {
-            var status = Context.Status.ToList();
+            var status = _statusRepo.GetAll();
             var response = status.Select(s => new StatusDto
             {
                 Id = s.Id,
@@ -31,8 +37,7 @@ namespace DenunciaUnaBestia.Api.Controllers
         [HttpGet("{id}")]
         public ActionResult<StatusDto> GetById(int id)
         {
-            var status = Context.Status
-                .FirstOrDefault(s => s.Id == id);
+            var status = _statusRepo.GetById(id);
             if (status == null)
             {
                 return NotFound();
@@ -45,49 +50,52 @@ namespace DenunciaUnaBestia.Api.Controllers
             return Ok(response);
         }
 
-        [HttpPost]  
+        [HttpPost]
         public ActionResult<int> Create(StatusDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
                 return BadRequest("Name of status is required.");
             }
-             
+
 
             var status = new Status
             {
                 Name = request.Name
             };
-             
-            Context.Status.Add(status);
-            Context.SaveChanges(); 
+
+            _statusRepo.Create(status);
+            unitOfWork.Complete();
+
 
             return Ok(new { Id = status.Id });
         }
 
-        [HttpPut("{id}")]  
+        [HttpPut("{id}")]
         public IActionResult Update(int id, StatusDto request)
         {
-            var existing = Context.Status
-                .FirstOrDefault(s => s.Id == id);
+            var existing = _statusRepo.GetById(id);
+
             if (existing == null)
-                return NotFound(); 
-            existing.Name = request.Name; 
+                return NotFound();
+            existing.Name = request.Name;
 
             Context.Status.Update(existing);
             Context.SaveChanges();
 
             return NoContent();
         }
-          
-        [HttpDelete]  
+
+        [HttpDelete]
         public IActionResult Delete(StatusDto request)
         {
-            var existing = Context.Status.FirstOrDefault(s => s.Id == request.Id);
+            var existing = _statusRepo.GetById(request.Id);
             if (existing == null)
                 return NotFound();
-            Context.Status.Remove(existing);
-            Context.SaveChanges();
+
+            _statusRepo.Delete(existing);
+            unitOfWork.Complete();
+
             return NoContent();
         }
     }

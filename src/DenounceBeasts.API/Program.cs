@@ -1,5 +1,8 @@
-using DenounceBeasts.API.Data;
-using DenounceBeasts.API.Models;
+using DenounceBeasts.Application.Models;
+using DenounceBeasts.Domain.Entities;
+using DenounceBeasts.Infraestructure;
+using DenounceBeasts.Infraestructure.Repository;
+using DenunciaUnaBestia.Api.Controllers;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +31,11 @@ builder.Services.AddAutoMapper(cfg =>
 //
 //builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = automapperLicence, typeof(MappingProfile));
 
+builder.Services.AddScoped<ComplaintTypeRepository>();
+builder.Services.AddScoped<SectorRepository>();
+builder.Services.AddScoped<GenericRespository<Status>>();
+builder.Services.AddScoped<GenericRespository<Municipality>>();
+builder.Services.AddScoped<UnitOfWork>();
 
 var app = builder.Build();
 
